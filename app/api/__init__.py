@@ -1,0 +1,14 @@
+from .auth import router as auth_router
+from .products import router as products_router
+from .clients import router as clients_router
+from .sales import router as sales_router
+from .dashboard import router as dashboard_router
+from .settings import router as settings_router
+from .brands import router as brands_router
+from .colors import router as colors_router
+from .seasons import router as seasons_router
+from .finance import router as finance_router
+from .sizes import router as sizes_router
+from .product_variants import router as product_variants_router
+from .marketing import router as marketing_router
+from .reports import router as reports_router
