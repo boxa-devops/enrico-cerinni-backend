@@ -1,8 +1,8 @@
-"""initial models
+"""initial setup
 
-Revision ID: 8ae2e7c46c54
+Revision ID: 4a047d892894
 Revises: 
-Create Date: 2025-08-05 22:25:48.471866
+Create Date: 2025-08-27 17:47:41.364645
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8ae2e7c46c54'
+revision: str = '4a047d892894'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,6 +46,7 @@ def upgrade() -> None:
     sa.Column('first_name', sa.String(length=100), nullable=False),
     sa.Column('last_name', sa.String(length=100), nullable=False),
     sa.Column('phone', sa.String(length=20), nullable=True),
+    sa.Column('telegram_chat_id', sa.String(length=64), nullable=True),
     sa.Column('address', sa.Text(), nullable=True),
     sa.Column('debt_amount', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
@@ -56,6 +57,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_clients_id'), 'clients', ['id'], unique=False)
     op.create_index(op.f('ix_clients_phone'), 'clients', ['phone'], unique=False)
+    op.create_index(op.f('ix_clients_telegram_chat_id'), 'clients', ['telegram_chat_id'], unique=False)
     op.create_table('colors',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
@@ -115,6 +117,19 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_sizes_id'), 'sizes', ['id'], unique=False)
     op.create_index(op.f('ix_sizes_name'), 'sizes', ['name'], unique=True)
+    op.create_table('suppliers',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('contact_person', sa.String(length=255), nullable=True),
+    sa.Column('phone', sa.String(length=50), nullable=True),
+    sa.Column('email', sa.String(length=255), nullable=True),
+    sa.Column('address', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_suppliers_id'), 'suppliers', ['id'], unique=False)
+    op.create_index(op.f('ix_suppliers_name'), 'suppliers', ['name'], unique=False)
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('first_name', sa.String(), nullable=True),
@@ -150,11 +165,58 @@ def upgrade() -> None:
     op.create_index(op.f('ix_products_id'), 'products', ['id'], unique=False)
     op.create_index(op.f('ix_products_name'), 'products', ['name'], unique=False)
     op.create_index(op.f('ix_products_sku'), 'products', ['sku'], unique=True)
+    op.create_table('report_templates',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('report_type', sa.Enum('SALES', 'FINANCE', 'INVENTORY', 'CLIENTS', 'PERFORMANCE', 'CUSTOM', name='reporttype'), nullable=False),
+    sa.Column('config_template', sa.JSON(), nullable=False),
+    sa.Column('is_system_template', sa.Boolean(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_report_templates_id'), 'report_templates', ['id'], unique=False)
+    op.create_table('reports',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('report_type', sa.Enum('SALES', 'FINANCE', 'INVENTORY', 'CLIENTS', 'PERFORMANCE', 'CUSTOM', name='reporttype'), nullable=False),
+    sa.Column('config', sa.JSON(), nullable=True),
+    sa.Column('status', sa.Enum('GENERATING', 'COMPLETED', 'FAILED', name='reportstatus'), nullable=True),
+    sa.Column('format', sa.Enum('JSON', 'PDF', 'EXCEL', 'CSV', name='reportformat'), nullable=True),
+    sa.Column('file_path', sa.String(length=500), nullable=True),
+    sa.Column('is_scheduled', sa.Boolean(), nullable=True),
+    sa.Column('schedule_config', sa.JSON(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('generated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False)
+    op.create_table('salary_payments',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('employee_id', sa.Integer(), nullable=False),
+    sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
+    sa.Column('payment_date', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('notes', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_salary_payments_id'), 'salary_payments', ['id'], unique=False)
     op.create_table('sales',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('receipt_number', sa.String(length=50), nullable=False),
     sa.Column('client_id', sa.Integer(), nullable=True),
     sa.Column('total_amount', sa.Numeric(precision=10, scale=2), nullable=False),
+    sa.Column('paid_amount', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('payment_method', sa.Enum('CASH', 'CARD', 'TRANSFER', name='paymentmethod'), nullable=False),
     sa.Column('status', sa.Enum('COMPLETED', 'PARTIALLY_PAID', 'DEBT', 'CANCELLED', 'PENDING', name='salestatus'), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
@@ -187,18 +249,36 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_product_variants_id'), 'product_variants', ['id'], unique=False)
     op.create_index(op.f('ix_product_variants_sku'), 'product_variants', ['sku'], unique=True)
+    op.create_table('report_executions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('report_id', sa.Integer(), nullable=True),
+    sa.Column('report_type', sa.Enum('SALES', 'FINANCE', 'INVENTORY', 'CLIENTS', 'PERFORMANCE', 'CUSTOM', name='reporttype'), nullable=False),
+    sa.Column('parameters', sa.JSON(), nullable=True),
+    sa.Column('status', sa.Enum('GENERATING', 'COMPLETED', 'FAILED', name='reportstatus'), nullable=False),
+    sa.Column('execution_time_ms', sa.Integer(), nullable=True),
+    sa.Column('data_points', sa.Integer(), nullable=True),
+    sa.Column('file_size_bytes', sa.Integer(), nullable=True),
+    sa.Column('error_message', sa.Text(), nullable=True),
+    sa.Column('started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_report_executions_id'), 'report_executions', ['id'], unique=False)
     op.create_table('transactions',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('transaction_type', sa.Enum('SALE', 'PURCHASE', 'EXPENSE', 'REFUND', 'DEBT_PAYMENT', name='transactiontype'), nullable=False),
     sa.Column('sale_id', sa.Integer(), nullable=True),
     sa.Column('client_id', sa.Integer(), nullable=True),
-    sa.Column('employee_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ),
-    sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ),
     sa.ForeignKeyConstraint(['sale_id'], ['sales.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_transactions_id'), 'transactions', ['id'], unique=False)
@@ -224,12 +304,20 @@ def downgrade() -> None:
     op.drop_table('sale_items')
     op.drop_index(op.f('ix_transactions_id'), table_name='transactions')
     op.drop_table('transactions')
+    op.drop_index(op.f('ix_report_executions_id'), table_name='report_executions')
+    op.drop_table('report_executions')
     op.drop_index(op.f('ix_product_variants_sku'), table_name='product_variants')
     op.drop_index(op.f('ix_product_variants_id'), table_name='product_variants')
     op.drop_table('product_variants')
     op.drop_index(op.f('ix_sales_receipt_number'), table_name='sales')
     op.drop_index(op.f('ix_sales_id'), table_name='sales')
     op.drop_table('sales')
+    op.drop_index(op.f('ix_salary_payments_id'), table_name='salary_payments')
+    op.drop_table('salary_payments')
+    op.drop_index(op.f('ix_reports_id'), table_name='reports')
+    op.drop_table('reports')
+    op.drop_index(op.f('ix_report_templates_id'), table_name='report_templates')
+    op.drop_table('report_templates')
     op.drop_index(op.f('ix_products_sku'), table_name='products')
     op.drop_index(op.f('ix_products_name'), table_name='products')
     op.drop_index(op.f('ix_products_id'), table_name='products')
@@ -237,6 +325,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_table('users')
+    op.drop_index(op.f('ix_suppliers_name'), table_name='suppliers')
+    op.drop_index(op.f('ix_suppliers_id'), table_name='suppliers')
+    op.drop_table('suppliers')
     op.drop_index(op.f('ix_sizes_name'), table_name='sizes')
     op.drop_index(op.f('ix_sizes_id'), table_name='sizes')
     op.drop_table('sizes')
@@ -250,6 +341,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_colors_name'), table_name='colors')
     op.drop_index(op.f('ix_colors_id'), table_name='colors')
     op.drop_table('colors')
+    op.drop_index(op.f('ix_clients_telegram_chat_id'), table_name='clients')
     op.drop_index(op.f('ix_clients_phone'), table_name='clients')
     op.drop_index(op.f('ix_clients_id'), table_name='clients')
     op.drop_table('clients')
