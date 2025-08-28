@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     port: int = int(os.getenv("PORT", "8000"))
     host: str = os.getenv("HOST", "0.0.0.0")
     debug: bool = os.getenv("DEBUG", "True").lower() == "true"
+    
+    # Environment
+    environment: str = os.getenv("ENVIRONMENT", "development")  # development, staging, production
 
     # CORS
     cors_origin: str = os.getenv(
@@ -47,6 +50,16 @@ class Settings(BaseSettings):
     sms_api_key: Optional[str] = os.getenv("SMS_API_KEY")
     sms_from_number: Optional[str] = os.getenv("SMS_FROM_NUMBER")
     sms_base_url: Optional[str] = os.getenv("SMS_BASE_URL")
+
+    @property
+    def is_production(self) -> bool:
+        """Check if we're running in production environment."""
+        return self.environment.lower() == "production"
+    
+    @property
+    def is_development(self) -> bool:
+        """Check if we're running in development environment."""
+        return self.environment.lower() == "development"
 
     class Config:
         env_file = ".env"

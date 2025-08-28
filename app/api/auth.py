@@ -25,7 +25,7 @@ async def login(
     try:
         tokens = auth_service.login_user(user_data)
 
-        # Set cookies for local development
+        # Set authentication cookies (with environment-appropriate security settings)
         set_auth_cookies(response, tokens["access_token"], tokens["refresh_token"])
 
         # Get user data for response

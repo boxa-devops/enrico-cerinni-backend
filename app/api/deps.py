@@ -15,15 +15,16 @@ def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
-    """Get current authenticated user from either cookie or header."""
+    """Get current authenticated user from either header or cookie."""
     token = None
 
-    # First try to get token from cookie (for local development)
-    if not credentials:
-        token = get_token_from_cookie(request, "access_token")
-    else:
-        # Fallback to header-based auth
+    # Try header-based auth first (standard for APIs and production)
+    if credentials:
         token = credentials.credentials
+    
+    # Fallback to cookie-based auth (useful for development and browser requests)
+    if not token:
+        token = get_token_from_cookie(request, "access_token")
 
     if not token:
         raise HTTPException(

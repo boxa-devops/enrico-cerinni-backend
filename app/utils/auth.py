@@ -75,15 +75,19 @@ def get_user_from_refresh_token(token: str) -> Optional[dict]:
 
 # Cookie-based authentication functions
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
-    """Set authentication cookies for local development."""
+    """Set authentication cookies with environment-appropriate security settings."""
+    # Determine security settings based on environment
+    secure = settings.is_production  # Use HTTPS in production
+    samesite = "strict" if settings.is_production else "lax"  # Stricter in production
+    
     # Access token cookie (short-lived)
     response.set_cookie(
         key="access_token",
         value=access_token,
         max_age=settings.access_token_expire_minutes * 60,  # Convert to seconds
         httponly=True,
-        secure=False,  # Set to True in production with HTTPS
-        samesite="lax",  # Set to "strict" in production
+        secure=secure,
+        samesite=samesite,
         path="/",
     )
 
@@ -93,16 +97,30 @@ def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
         value=refresh_token,
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60,  # Convert to seconds
         httponly=True,
-        secure=False,  # Set to True in production with HTTPS
-        samesite="lax",  # Set to "strict" in production
+        secure=secure,
+        samesite=samesite,
         path="/",
     )
 
 
 def clear_auth_cookies(response: Response):
-    """Clear authentication cookies."""
-    response.delete_cookie(key="access_token", path="/")
-    response.delete_cookie(key="refresh_token", path="/")
+    """Clear authentication cookies with environment-appropriate security settings."""
+    # Use same security settings as when setting cookies for proper cleanup
+    secure = settings.is_production
+    samesite = "strict" if settings.is_production else "lax"
+    
+    response.delete_cookie(
+        key="access_token", 
+        path="/",
+        secure=secure,
+        samesite=samesite
+    )
+    response.delete_cookie(
+        key="refresh_token", 
+        path="/",
+        secure=secure,
+        samesite=samesite
+    )
 
 
 def get_token_from_cookie(request, cookie_name: str) -> Optional[str]:
