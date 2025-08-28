@@ -20,29 +20,29 @@ def get_current_user(
 
     # Try header-based auth first (standard for APIs and production)
     if credentials:
-        print("credentials", credentials)
+        print(f"Found Authorization header credentials: {credentials.credentials[:20]}...")
         token = credentials.credentials
     
     # Fallback to cookie-based auth (useful for development and browser requests)
     if not token:
-        print("no token")
+        print("No Authorization header found, trying cookie-based auth...")
         token = get_token_from_cookie(request, "access_token")
 
     if not token:
-        print("no token 1")
+        print("No valid token found in either Authorization header or cookies")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="No authentication token found. Please provide a valid Bearer token in Authorization header or access_token cookie.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     payload = get_current_user_payload(token)
 
     if not payload:
-        print("no payload")
+        print(f"Invalid or expired token: {token[:20]}...")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Invalid or expired authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

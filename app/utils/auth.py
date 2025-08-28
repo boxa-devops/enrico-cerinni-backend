@@ -107,7 +107,7 @@ def clear_auth_cookies(response: Response):
     """Clear authentication cookies with environment-appropriate security settings."""
     # Use same security settings as when setting cookies for proper cleanup
     secure = settings.is_production
-    samesite = "strict"
+    samesite = "strict" if settings.is_production else "lax"  # Match the setting logic
     
     response.delete_cookie(
         key="access_token", 
@@ -124,5 +124,19 @@ def clear_auth_cookies(response: Response):
 
 
 def get_token_from_cookie(request, cookie_name: str) -> Optional[str]:
-    """Get token from cookie."""
-    return request.cookies.get(cookie_name)
+    """Get token from cookie with proper error handling."""
+    try:
+        # Handle different types of FastAPI request objects
+        if hasattr(request, 'cookies') and request.cookies:
+            token = request.cookies.get(cookie_name)
+            if token:
+                print(f"Found {cookie_name} in cookies: {token[:20]}...")
+                return token
+            else:
+                print(f"No {cookie_name} found in cookies. Available cookies: {list(request.cookies.keys())}")
+        else:
+            print(f"No cookies found in request or request has no cookies attribute")
+        return None
+    except Exception as e:
+        print(f"Error getting token from cookie {cookie_name}: {str(e)}")
+        return None
