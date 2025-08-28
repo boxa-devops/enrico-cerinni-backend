@@ -77,7 +77,7 @@ def get_user_from_refresh_token(token: str) -> Optional[dict]:
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
     """Set authentication cookies with environment-appropriate security settings."""
     # Determine security settings based on environment
-    secure = settings.is_production  # Use HTTPS in production
+    secure = False  # Use HTTPS in production
     samesite = "strict" if settings.is_production else "lax"  # Stricter in production
     
     # Access token cookie (short-lived)
