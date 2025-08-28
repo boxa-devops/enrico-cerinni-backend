@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         """Check if we're running in production environment."""
-        return self.environment.lower() == "production"
+        return True
     
     @property
     def is_development(self) -> bool:

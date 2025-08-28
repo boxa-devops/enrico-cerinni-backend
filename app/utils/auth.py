@@ -107,7 +107,7 @@ def clear_auth_cookies(response: Response):
     """Clear authentication cookies with environment-appropriate security settings."""
     # Use same security settings as when setting cookies for proper cleanup
     secure = settings.is_production
-    samesite = "strict" if settings.is_production else "lax"
+    samesite = "strict"
     
     response.delete_cookie(
         key="access_token", 
