@@ -20,13 +20,16 @@ def get_current_user(
 
     # Try header-based auth first (standard for APIs and production)
     if credentials:
+        print("credentials", credentials)
         token = credentials.credentials
     
     # Fallback to cookie-based auth (useful for development and browser requests)
     if not token:
+        print("no token")
         token = get_token_from_cookie(request, "access_token")
 
     if not token:
+        print("no token 1")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
@@ -36,6 +39,7 @@ def get_current_user(
     payload = get_current_user_payload(token)
 
     if not payload:
+        print("no payload")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
