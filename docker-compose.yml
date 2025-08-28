@@ -27,7 +27,8 @@ services:
       - JWT_SECRET=your-jwt-secret-key-here
       - JWT_REFRESH_SECRET=your-refresh-secret-key-here
       - CORS_ORIGIN=http://localhost:3001
-      - DEBUG=True
+      - DEBUG=False
+      - ENVIRONMENT=production
     depends_on:
       db:
         condition: service_healthy
