@@ -112,7 +112,6 @@ async def update_category(
             id=category.id,
             name=category.name,
             description=category.description,
-            color=category.color,
             created_at=category.created_at.isoformat(),
             updated_at=category.updated_at.isoformat() if category.updated_at else None,
         ),

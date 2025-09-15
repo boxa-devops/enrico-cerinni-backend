@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 # Add CORS middleware with cookie support for local and LAN development
-allowed_origins = [origin.strip() for origin in settings.cors_origin.split(",") if origin.strip()]
+allowed_origins = [origin.strip() for origin in settings.cors_origin.split(",") if origin.strip()] + ["https://enrico.uz"]
 
 app.add_middleware(
     CORSMiddleware,
