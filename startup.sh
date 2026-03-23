@@ -13,30 +13,22 @@ import psycopg2
 import os
 
 db_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/enrico_cerrini_dev')
-print(f'Connecting to: {db_url}')
 
-parts = db_url.replace('postgresql://', '').split('/')
-db_name = parts[-1]
-user_pass_host = parts[0]
-user_pass, host_port = user_pass_host.split('@')
-user, password = user_pass.split(':')
-host, port = host_port.split(':')
+if db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
 
+print('Connecting to Database...')
+
+# psycopg2 fully supports URI strings, even with postgres:// or postgresql://
 max_attempts = 30
 for i in range(max_attempts):
     try:
-        conn = psycopg2.connect(
-            host=host,
-            port=int(port),
-            database=db_name,
-            user=user,
-            password=password
-        )
+        conn = psycopg2.connect(db_url)
         conn.close()
         print('Database connection successful!')
         break
     except Exception as e:
-        print(f'Attempt {i+1}/{max_attempts}: Database not ready ({str(e)}), waiting...')
+        print(f'Attempt {i+1}/{max_attempts}: Database not ready ({type(e).__name__}), waiting...')
         time.sleep(2)
 else:
     print('Database failed to become ready after 60 seconds')
