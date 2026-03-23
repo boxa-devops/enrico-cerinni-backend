@@ -1,63 +1,13 @@
-from pydantic_settings import BaseSettings
 from typing import Optional
-import os
 from dotenv import load_dotenv
+from pydantic import BaseModel, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
 
-class Settings(BaseSettings):
-    # Database
-    database_url: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://username:password@localhost:5432/enrico_cerrini_dev",
-    )
-
-    # JWT
-    jwt_secret: str = os.getenv("JWT_SECRET", "your-jwt-secret-key-here")
-    jwt_refresh_secret: str = os.getenv(
-        "JWT_REFRESH_SECRET", "your-refresh-secret-key-here"
-    )
-    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or "30")
-    refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS") or "7")
-
-    # Server
-    port: int = int(os.getenv("PORT") or "8000")
-    host: str = os.getenv("HOST", "0.0.0.0")
-    debug: bool = os.getenv("DEBUG", "True").lower() == "true"
-    
-    # Environment
-    environment: str = os.getenv("ENVIRONMENT", "development")  # development, staging, production
-
-    # CORS
-    cors_origin: str = os.getenv(
-        "CORS_ORIGIN", "http://localhost:3001,http://localhost:3000,http://localhost:3002"
-    )
-
-    # Security
-    secret_key: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    bcrypt_rounds: int = int(os.getenv("BCRYPT_ROUNDS") or "12")
-
-    # Rate Limiting
-    rate_limit_per_minute: int = int(os.getenv("RATE_LIMIT_PER_MINUTE") or "60")
-
-    # Marketing / Notifications
-    telegram_bot_token: Optional[str] = os.getenv("TELEGRAM_BOT_TOKEN")
-    sms_provider: Optional[str] = os.getenv("SMS_PROVIDER", "")
-    sms_api_key: Optional[str] = os.getenv("SMS_API_KEY")
-    sms_from_number: Optional[str] = os.getenv("SMS_FROM_NUMBER")
-    sms_base_url: Optional[str] = os.getenv("SMS_BASE_URL")
-
-    @property
-    def is_production(self) -> bool:
-        """Check if we're running in production environment."""
-        return self.environment.lower() == "production"
-    
-    @property
-    def is_development(self) -> bool:
-        """Check if we're running in development environment."""
-        return self.environment.lower() == "development"
+class DatabaseConfig(BaseModel):
+    database_url: str = "postgresql://username:password@localhost:5432/enrico_cerrini_dev"
 
     @property
     def sync_database_url(self) -> str:
@@ -67,8 +17,71 @@ class Settings(BaseSettings):
             url = url.replace("postgres://", "postgresql://", 1)
         return url
 
-    class Config:
-        env_file = ".env"
+
+class JwtConfig(BaseModel):
+    jwt_secret: str = "your-jwt-secret-key-here"
+    jwt_refresh_secret: str = "your-refresh-secret-key-here"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+
+
+class ServerConfig(BaseModel):
+    port: int = 8000
+    host: str = "0.0.0.0"
+    debug: bool = True
+    environment: str = "development"  # development, staging, production
+
+    @property
+    def is_production(self) -> bool:
+        """Check if we're running in production environment."""
+        return self.environment.lower() == "production"
+
+    @property
+    def is_development(self) -> bool:
+        """Check if we're running in development environment."""
+        return self.environment.lower() == "development"
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug(cls, v):
+        if isinstance(v, str):
+            return v.lower() == "true"
+        return v
+
+
+class SecurityConfig(BaseModel):
+    secret_key: str = "your-secret-key-here"
+    bcrypt_rounds: int = 12
+
+
+class RateLimitConfig(BaseModel):
+    rate_limit_per_minute: int = 60
+
+
+class NotificationConfig(BaseModel):
+    telegram_bot_token: Optional[str] = None
+    sms_provider: Optional[str] = ""
+    sms_api_key: Optional[str] = None
+    sms_from_number: Optional[str] = None
+    sms_base_url: Optional[str] = None
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        env_nested_delimiter="__",
+        env_prefix="APP_CONFIG__",
+        extra="ignore",
+    )
+
+    database: DatabaseConfig = DatabaseConfig()
+    jwt: JwtConfig = JwtConfig()
+    server: ServerConfig = ServerConfig()
+    security: SecurityConfig = SecurityConfig()
+    rate_limit: RateLimitConfig = RateLimitConfig()
+    notification: NotificationConfig = NotificationConfig()
 
 
 settings = Settings()

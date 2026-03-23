@@ -44,4 +44,4 @@ fi
 
 echo "Step 3: Starting FastAPI server on port $APP_PORT..."
 # Using --workers 1 to reduce memory footprint on startup in limited environments
-exec uv run uvicorn app.main:app --host 0.0.0.0 --port "$APP_PORT" --proxy-headers --forwarded-allow-ips='*'
+exec uv run uvicorn main:app --host 0.0.0.0 --port "$APP_PORT" --proxy-headers --forwarded-allow-ips='*'
