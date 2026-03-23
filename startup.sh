@@ -4,7 +4,7 @@ echo "🚀 Starting Enrico Backend..."
 
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
-python -c "
+uv run python -c "
 import time
 import psycopg2
 import os
@@ -43,7 +43,7 @@ else:
 
 # Run migrations
 echo "📦 Running database migrations..."
-alembic upgrade head
+uv run alembic upgrade head
 
 if [ $? -eq 0 ]; then
     echo "✅ Migrations completed successfully"
@@ -54,4 +54,4 @@ fi
 
 # Start the server
 echo "🌐 Starting FastAPI server..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
