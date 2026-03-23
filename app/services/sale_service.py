@@ -75,7 +75,7 @@ class SaleService:
             sale_status = SaleStatus.PARTIALLY_PAID
             
             
-        if sale_data.paid_amount < total_amount:
+        if sale_data.paid_amount < total_amount and sale_data.client_id and client:
             client.debt_amount += total_amount - sale_data.paid_amount
             self.db.commit()
 
@@ -167,7 +167,7 @@ class SaleService:
 
         return sales, pagination
 
-    def cancel_sale(self, sale_id: int) -> Optional[Sale]:
+    def cancel_sale(self, sale_id: int, current_user: User) -> Optional[Sale]:
         """Cancel a sale and restore stock."""
         sale = self.get_sale(sale_id)
         if not sale:
@@ -187,17 +187,23 @@ class SaleService:
             if product_variant:
                 product_variant.stock_quantity += item.quantity
 
+        # Update client debt if applicable
+        if sale.status in [SaleStatus.DEBT, SaleStatus.PARTIALLY_PAID] and sale.client_id:
+            client = self.db.query(Client).filter(Client.id == sale.client_id).first()
+            if client:
+                client.debt_amount -= (sale.total_amount - sale.paid_amount)
+
         # Update sale status
         sale.status = SaleStatus.CANCELLED
 
         # Create refund transaction
         transaction = Transaction(
-            type=TransactionType.REFUND,
+            transaction_type=TransactionType.REFUND,
             amount=-sale.total_amount, # Changed from final_amount to total_amount
             description=f"Refund for cancelled sale {sale.receipt_number}",
             sale_id=sale.id,
             client_id=sale.client_id,
-            reference_number=f"REF-{sale.receipt_number}",
+            user_id=current_user.id,
         )
         self.db.add(transaction)
 
@@ -279,6 +285,12 @@ class SaleService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Payment amount exceeds remaining debt. Remaining debt: {remaining_debt}"
             )
+
+        # Update client debt
+        if sale.client_id:
+            client = self.db.query(Client).filter(Client.id == sale.client_id).first()
+            if client:
+                client.debt_amount -= payment_amount
 
         # Update paid amount
         sale.paid_amount += payment_amount

@@ -54,12 +54,20 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         """Check if we're running in production environment."""
-        return True
+        return self.environment.lower() == "production"
     
     @property
     def is_development(self) -> bool:
         """Check if we're running in development environment."""
         return self.environment.lower() == "development"
+
+    @property
+    def sync_database_url(self) -> str:
+        """Normalize DATABASE_URL for SQLAlchemy psycopg2 driver."""
+        url = self.database_url
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
 
     class Config:
         env_file = ".env"

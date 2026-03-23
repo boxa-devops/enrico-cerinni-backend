@@ -1,9 +1,12 @@
 #!/bin/bash
+set -e
 
-echo "🚀 Starting Enrico Backend..."
+echo "Starting Enrico Backend..."
 
-# Wait for database to be ready
-echo "⏳ Waiting for database connection..."
+# Use Railway's PORT if available, fallback to 8000
+APP_PORT=${PORT:-8000}
+
+echo "Waiting for database connection..."
 uv run python -c "
 import time
 import psycopg2
@@ -12,7 +15,6 @@ import os
 db_url = os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/enrico_cerrini_dev')
 print(f'Connecting to: {db_url}')
 
-# Parse database URL
 parts = db_url.replace('postgresql://', '').split('/')
 db_name = parts[-1]
 user_pass_host = parts[0]
@@ -31,27 +33,18 @@ for i in range(max_attempts):
             password=password
         )
         conn.close()
-        print('✅ Database connection successful!')
+        print('Database connection successful!')
         break
     except Exception as e:
-        print(f'⏳ Attempt {i+1}/{max_attempts}: Database not ready ({str(e)}), waiting...')
+        print(f'Attempt {i+1}/{max_attempts}: Database not ready ({str(e)}), waiting...')
         time.sleep(2)
 else:
-    print('❌ Database failed to become ready after 60 seconds')
+    print('Database failed to become ready after 60 seconds')
     exit(1)
 "
 
-# Run migrations
-echo "📦 Running database migrations..."
+echo "Running database migrations..."
 uv run alembic upgrade head
 
-if [ $? -eq 0 ]; then
-    echo "✅ Migrations completed successfully"
-else
-    echo "❌ Migration failed"
-    exit 1
-fi
-
-# Start the server
-echo "🌐 Starting FastAPI server..."
-exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+echo "Starting FastAPI server on port $APP_PORT..."
+exec uv run uvicorn app.main:app --host 0.0.0.0 --port "$APP_PORT"

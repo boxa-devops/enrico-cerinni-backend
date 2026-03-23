@@ -222,11 +222,11 @@ class DashboardService:
         # Transactions by type
         transactions_by_type = (
             query.with_entities(
-                Transaction.type,
+                Transaction.transaction_type,
                 func.count(Transaction.id).label("count"),
                 func.sum(Transaction.amount).label("total"),
             )
-            .group_by(Transaction.type)
+            .group_by(Transaction.transaction_type)
             .all()
         )
 
@@ -236,7 +236,7 @@ class DashboardService:
             "expenses": float(abs(expenses)),
             "net_profit": float(net_profit),
             "transactions_by_type": [
-                {"type": t.type.value, "count": t.count, "total": float(t.total)}
+                {"type": t.transaction_type.value, "count": t.count, "total": float(t.total)}
                 for t in transactions_by_type
             ],
         }

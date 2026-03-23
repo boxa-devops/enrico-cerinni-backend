@@ -97,14 +97,14 @@ class ProductService:
 
         if filters.search:
             search_term = f"%{filters.search}%"
-            query = query.filter(
+            query = query.join(ProductVariant, ProductVariant.product_id == Product.id).filter(
                 or_(
                     Product.name.ilike(search_term),
                     Product.description.ilike(search_term),
                     Product.sku.ilike(search_term),
                     ProductVariant.sku.ilike(search_term)
                 )
-            )
+            ).distinct()
 
         # Apply pagination
         total = query.count()

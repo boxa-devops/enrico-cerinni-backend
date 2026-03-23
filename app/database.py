@@ -5,7 +5,7 @@ from app.config import settings
 
 # Create database engine
 engine = create_engine(
-    settings.database_url,
+    settings.sync_database_url,
     pool_pre_ping=True,
     pool_recycle=300,
     pool_size=10,
