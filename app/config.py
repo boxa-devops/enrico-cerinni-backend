@@ -19,13 +19,11 @@ class Settings(BaseSettings):
         "JWT_REFRESH_SECRET", "your-refresh-secret-key-here"
     )
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    access_token_expire_minutes: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-    )
-    refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+    access_token_expire_minutes: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES") or "30")
+    refresh_token_expire_days: int = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS") or "7")
 
     # Server
-    port: int = int(os.getenv("PORT", "8000"))
+    port: int = int(os.getenv("PORT") or "8000")
     host: str = os.getenv("HOST", "0.0.0.0")
     debug: bool = os.getenv("DEBUG", "True").lower() == "true"
     
@@ -39,10 +37,10 @@ class Settings(BaseSettings):
 
     # Security
     secret_key: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    bcrypt_rounds: int = int(os.getenv("BCRYPT_ROUNDS", "12"))
+    bcrypt_rounds: int = int(os.getenv("BCRYPT_ROUNDS") or "12")
 
     # Rate Limiting
-    rate_limit_per_minute: int = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    rate_limit_per_minute: int = int(os.getenv("RATE_LIMIT_PER_MINUTE") or "60")
 
     # Marketing / Notifications
     telegram_bot_token: Optional[str] = os.getenv("TELEGRAM_BOT_TOKEN")
