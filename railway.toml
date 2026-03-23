@@ -1,10 +1,15 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+builder = "nixpacks"
+buildCommand = "pip install uv && uv sync --no-dev"
 
 [deploy]
-startCommand = "/bin/sh /app/startup.sh"
+startCommand = "chmod +x ./startup.sh && ./startup.sh"
 healthcheckPath = "/health"
-healthcheckTimeout = 60
+healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+[env]
+PORT = "8000"
+ENVIRONMENT = "production"
+HOST = "0.0.0.0"
