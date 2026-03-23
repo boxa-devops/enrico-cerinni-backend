@@ -7,7 +7,7 @@ load_dotenv()
 
 
 class DatabaseConfig(BaseModel):
-    database_url: str = "postgresql://username:password@localhost:5432/enrico_cerrini_dev"
+    database_url: str
 
     @property
     def sync_database_url(self) -> str:
