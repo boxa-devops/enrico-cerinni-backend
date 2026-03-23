@@ -4,8 +4,6 @@ buildCommand = "pip install uv && uv sync --no-dev"
 
 [deploy]
 startCommand = "chmod +x ./startup.sh && ./startup.sh"
-healthcheckPath = "/health"
-healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 

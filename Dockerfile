@@ -23,8 +23,6 @@ RUN uv sync --no-dev
 RUN chmod +x /app/startup.sh
 
 EXPOSE ${PORT:-8000}
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
-    CMD curl -f http://127.0.0.1:${PORT:-8000}/health || exit 1
+# Healthcheck removed as requested
 
 CMD ["/bin/sh", "/app/startup.sh"]
